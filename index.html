@@ -188,17 +188,36 @@
         svg {
             width: 100%;
             height: 100%;
-            /* MEJORA DE RESOLUCIÓN: Fuerza al navegador a renderizar SVG con la máxima nitidez geométrica */
             shape-rendering: geometricPrecision;
             text-rendering: optimizeLegibility;
         }
 
-        /* Alta resolución para los puntos del mapa */
+        /* Estilos de alta definición para los elementos */
         .disaster-point {
             stroke-width: 0.5px;
             stroke: rgba(0, 0, 0, 0.3);
-            /* Evita que los bordes se distorsionen al hacer zoom masivo */
             vector-effect: non-scaling-stroke; 
+        }
+
+        /* DISEÑO DE LA PISTA OPTIMIZADA */
+        .runway-base {
+            fill: #222325;
+            stroke: #505358;
+            stroke-width: 1.5px;
+        }
+
+        .runway-line {
+            stroke: #a0a5ad;
+            stroke-width: 1px;
+            stroke-dasharray: 6, 6; /* Línea discontinua aeronáutica */
+        }
+
+        .runway-text {
+            fill: #8a909a;
+            font-size: 8px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            user-select: none;
         }
 
         /* Panel de Información Adaptativo */
@@ -229,7 +248,6 @@
             font-size: 0.95rem;
         }
 
-        /* DISEÑO MÓVIL CRÍTICO (Ajustes de centrado y visualización) */
         @media (max-width: 768px) {
             #sidebar {
                 position: absolute;
@@ -278,11 +296,6 @@
             fill: #161c26;
             stroke: #334257;
             stroke-width: 2px;
-        }
-        .runway {
-            fill: #313336;
-            stroke: #4d5054;
-            stroke-width: 1px;
         }
     </style>
 </head>
@@ -384,19 +397,43 @@
             mainGroup.append("line").attr("class", "grid-line").attr("x1", -1000).attr("y1", i).attr("x2", 2000).attr("y2", i);
         }
 
+        // Línea de Costa Litoral
         mainGroup.append("path")
             .attr("class", "coastline")
             .attr("d", "M -800,-800 L 2000,-800 L 2000,220 Q 1500,200 1000,240 Q 500,260 200,300 Q 0,320 -800,340 Z");
 
-        mainGroup.append("rect")
-            .attr("class", "runway")
-            .attr("x", 120)
-            .attr("y", 345)
-            .attr("width", 380)
-            .attr("height", 20)
+        // GRUPO DE LA PISTA (REESTRUCTURADO PARA MÁS REALCE)
+        const runwayGroup = mainGroup.append("g")
+            .attr("id", "runway-system")
             .attr("transform", "rotate(2, 300, 345)");
 
-        // Generación de Puntos
+        // Base de asfalto de la pista
+        runwayGroup.append("rect")
+            .attr("class", "runway-base")
+            .attr("x", 120)
+            .attr("y", 342)
+            .attr("width", 380)
+            .attr("height", 24)
+            .attr("rx", 2); // Bordes ligeramente suavizados
+
+        // Línea central de pista discontinua
+        runwayGroup.append("line")
+            .attr("class", "runway-line")
+            .attr("x1", 125)
+            .attr("y1", 354)
+            .attr("x2", 495)
+            .attr("y2", 354);
+
+        // Texto descriptivo integrado sobre el eje de orientación
+        runwayGroup.append("text")
+            .attr("class", "runway-text")
+            .attr("x", 310)
+            .attr("y", 334)
+            .attr("text-anchor", "middle")
+            .text("AEROPUERTO INTERNACIONAL DE MAIQUETÍA");
+
+
+        // Generación de Puntos Sísmicos
         const totalPoints = 3420;
         const dataPoints = [];
         const centers = [
@@ -434,7 +471,7 @@
             dataPoints.push({ id: i, x: x, y: finalY, severity: severity, color: color, sector: center.name });
         }
 
-        // Renderizado de Puntos en Alta Resolución
+        // Renderizado de Puntos
         const pointsSelection = mainGroup.selectAll(".disaster-point")
             .data(dataPoints)
             .enter()
@@ -477,28 +514,23 @@
             mainGroup.selectAll(".disaster-point").attr("r", p => p.severity === 'high' ? 3.2 : 2.2).attr("stroke", "rgba(0,0,0,0.3)");
         });
 
-        // FUNCIÓN CRÍTICA: Centrado Dinámico y Automático Sin Importar Pantalla
+        // Centrado Dinámico y Automático
         function resetMap() {
             d3.select("#info-box").style("display", "none");
             
-            // Obtener dimensiones actuales reales del visor
             const isSidebarCollapsed = d3.select("#sidebar").classed("collapsed") || window.innerWidth <= 768;
             const activeWidth = window.innerWidth - (isSidebarCollapsed ? 0 : 320);
             const activeHeight = window.innerHeight;
 
-            // Caja que encierra a todo el cúmulo de datos reales (X de 50 a 650, Y de 260 a 630 aprox)
             const bounds = { xMin: 60, xMax: 640, yMin: 280, yMax: 630 };
             const boundsWidth = bounds.xMax - bounds.xMin;
             const boundsHeight = bounds.yMax - bounds.yMin;
 
-            // Calcular escala óptima matemática para encuadrar todo perfectamente
             const scale = Math.min(activeWidth / boundsWidth, activeHeight / boundsHeight) * 0.85;
 
-            // Calcular traslación exacta al centro de la pantalla disponible
             const translateX = (activeWidth / 2) - scale * (bounds.xMin + boundsWidth / 2);
             const translateY = (activeHeight / 2) - scale * (bounds.yMin + boundsHeight / 2);
 
-            // Aplicar transformación suave
             svg.transition().duration(600).call(
                 zoomBehavior.transform,
                 d3.zoomIdentity.translate(translateX, translateY).scale(scale)
@@ -530,6 +562,7 @@
                 sidebar.classed("collapsed", false);
                 if(window.innerWidth > 768) floatingBtn.style("display", "none");
             } else {
+                sidebar.collapsed = true;
                 sidebar.classed("collapsed", true);
                 floatingBtn.style("display", "flex");
             }
@@ -541,13 +574,11 @@
         function zoomIn() { svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.3); }
         function zoomOut() { svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.7); }
 
-        // Inicialización adaptativa móvil
         if (window.innerWidth <= 768) {
             d3.select("#sidebar").classed("collapsed", true);
             d3.select("#floating-toggle").style("display", "flex");
         }
 
-        // Ejecutar centrado automático inicial inmediato
         setTimeout(resetMap, 200);
     </script>
 </body>
