@@ -128,7 +128,7 @@
             color: #ffb4ab;
         }
 
-        /* DISEÑO DE LA LEYENDA DENTRO DEL SIDEBAR */
+        /* Leyenda integrada */
         .sidebar-legend {
             display: flex;
             flex-direction: column;
@@ -177,7 +177,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 5;
+            z-index: 15;
             display: none;
         }
 
@@ -198,15 +198,17 @@
             height: 100%;
         }
 
-        /* Panel de Información Flotante */
+        /* PANEL DE INFORMACIÓN ADAPTATIVO (RESPONSIVE) */
         .floating-panel {
             position: absolute;
-            background: rgba(17, 19, 21, 0.9);
+            background: rgba(17, 19, 21, 0.92);
             backdrop-filter: blur(8px);
             border: 1px solid #43474e;
-            padding: 15px;
+            padding: 14px;
             border-radius: 8px;
             font-size: 0.8rem;
+            z-index: 5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
 
         #info-box {
@@ -223,6 +225,18 @@
             font-size: 0.95rem;
         }
 
+        /* ADAPTACIÓN CRÍTICA PARA CELULARES (Pantallas menores a 768px) */
+        @media (max-width: 768px) {
+            #info-box {
+                top: 70px; /* Se ubica abajo del botón de menú ☰ para no taparlo */
+                left: 15px;
+                right: 15px;
+                width: auto; /* Ocupa todo el ancho disponible del cel */
+                border-left: none;
+                border-top: 4px solid #ffb4ab; /* Línea de diseño ahora arriba */
+            }
+        }
+
         #zoom-controls {
             position: absolute;
             bottom: 20px;
@@ -230,6 +244,7 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            z-index: 5;
         }
 
         .zoom-btn {
@@ -342,12 +357,12 @@
 
         <div id="info-box" class="floating-panel">
             <h3 id="info-title">Detalle de Estructura</h3>
-            <p id="info-body">Pase el cursor sobre un punto marcado para ver la evaluación del daño.</p>
+            <p id="info-body">Pase el cursor o toque un punto para ver la evaluación.</p>
         </div>
     </div>
 
     <script>
-        // FUNCIÓN PARA CONTRAER / EXPANDIR PANEL LATERAL
+        // MANEJO DEL PANEL LATERAL
         function toggleSidebar() {
             const sidebar = d3.select("#sidebar");
             const floatingBtn = d3.select("#floating-toggle");
@@ -368,9 +383,9 @@
             }, 300);
         }
 
-        // CONFIGURACIÓN INICIAL DEL MAPA (D3.js)
+        // CONFIGURACIÓN D3 MAPA
         const svg = d3.select("#scene");
-        let width = window.innerWidth - 320;
+        let width = window.innerWidth - (window.innerWidth > 768 ? 320 : 0);
         let height = window.innerHeight;
 
         const mainGroup = svg.append("g").attr("id", "main-group");
@@ -383,18 +398,18 @@
 
         svg.call(zoomBehavior);
 
-        // Líneas de cuadrícula fijas
+        // Cuadrícula táctica
         for (let i = -2000; i < 3000; i += 80) {
             mainGroup.append("line").attr("class", "grid-line").attr("x1", i).attr("y1", -2000).attr("x2", i).attr("y2", 3000);
             mainGroup.append("line").attr("class", "grid-line").attr("x1", -2000).attr("y1", i).attr("x2", 3000).attr("y2", i);
         }
 
-        // Geometría Litoral Orgánica
+        // Costa Litoral
         mainGroup.append("path")
             .attr("class", "coastline")
             .attr("d", "M -1000,-1000 L 3000,-1000 L 3000,220 Q 1500,200 1000,240 Q 500,260 200,300 Q 0,320 -1000,340 Z");
 
-        // Aeropuerto
+        // Pista Aeropuerto
         mainGroup.append("rect")
             .attr("class", "runway")
             .attr("x", 120)
@@ -403,7 +418,7 @@
             .attr("height", 20)
             .attr("transform", "rotate(2, 300, 345)");
 
-        // Generación de Datos
+        // Puntos Sísmicos Ficticios
         const totalPoints = 3420;
         const dataPoints = [];
         const centers = [
@@ -441,7 +456,7 @@
             dataPoints.push({ id: i, x: x, y: finalY, severity: severity, color: color, sector: center.name });
         }
 
-        // Renderizado
+        // Renderizado con soporte Touch para Móviles
         const pointsSelection = mainGroup.selectAll(".disaster-point")
             .data(dataPoints)
             .enter()
@@ -453,9 +468,9 @@
             .attr("fill", d => d.color)
             .attr("opacity", 0.8)
             .on("mouseover", showTooltip)
+            .on("click", showTooltip) // Fundamental para interacción táctil en celular
             .on("mouseleave", hideTooltip);
 
-        // Evento de Filtro Desplegable
         d3.select("#filter-impact").on("change", function() {
             const val = this.value;
             pointsSelection.style("display", d => {
@@ -465,18 +480,31 @@
         });
 
         function showTooltip(event, d) {
+            mainGroup.selectAll(".disaster-point").attr("r", p => p.severity === 'high' ? 3.5 : 2.5).attr("stroke", "none");
             d3.select(this).attr("r", 6).attr("stroke", "#fff").attr("stroke-width", 1.5);
+            
             let statusText = d.severity === 'high' ? "COLAPSO ESTRUCTURAL / SEVERO" : 
                              d.severity === 'medium' ? "DAÑO MODERADO" : "DAÑO LEVE / PREVENTIVO";
 
             d3.select("#info-box").style("display", "block");
             d3.select("#info-title").text(d.sector).style("color", d.color);
             d3.select("#info-body").html(`<strong>ID Estructura:</strong> LGA-${1000 + d.id}<br><strong>Condición:</strong> ${statusText}<br><strong>Coordenadas:</strong> ${d.x.toFixed(2)}, ${d.y.toFixed(2)}`);
+            
+            event.stopPropagation(); // Previene conflictos de click en móviles
         }
 
         function hideTooltip() {
-            d3.select(this).attr("r", d => d.severity === 'high' ? 3.5 : 2.5).attr("stroke", "none");
+            // No ocultar inmediatamente en móvil tras un click para permitir lectura
+            if (window.innerWidth > 768) {
+                d3.select(this).attr("r", d => d.severity === 'high' ? 3.5 : 2.5).attr("stroke", "none");
+            }
         }
+
+        // Cerrar tooltip si se toca el fondo del mapa en el celular
+        svg.on("click", () => {
+            d3.select("#info-box").style("display", "none");
+            mainGroup.selectAll(".disaster-point").attr("r", p => p.severity === 'high' ? 3.5 : 2.5).attr("stroke", "none");
+        });
 
         function focusSector(x, y, name) {
             const isSidebarCollapsed = d3.select("#sidebar").classed("collapsed");
@@ -493,7 +521,7 @@
         }
 
         window.addEventListener("resize", () => {
-            const isSidebarCollapsed = d3.select("#sidebar").classed("collapsed");
+            const isSidebarCollapsed = d3.select("#sidebar").classed("collapsed") || window.innerWidth <= 768;
             width = window.innerWidth - (isSidebarCollapsed ? 0 : 320);
             height = window.innerHeight;
         });
@@ -503,6 +531,12 @@
         function resetMap() {
             d3.select("#info-box").style("display", "none");
             svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity.translate(30, 0).scale(1.05));
+        }
+
+        // Si se inicia en celular, empezar con menú contraído automáticamente
+        if (window.innerWidth <= 768) {
+            d3.select("#sidebar").classed("collapsed", true);
+            d3.select("#floating-toggle").style("display", "flex");
         }
 
         resetMap();
