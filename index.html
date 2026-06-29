@@ -60,7 +60,7 @@
             letter-spacing: 1px;
         }
 
-        /* Títulos de sección para separar funciones claramente */
+        /* Títulos de sección */
         .menu-section-title {
             font-size: 0.8rem;
             text-transform: uppercase;
@@ -98,7 +98,7 @@
             width: 100%;
         }
 
-        /* Rediseño de Botones de Sectores (Estilo Localizador de Cámara) */
+        /* Botones de Sectores */
         .sector-btn {
             background-color: #232427;
             border: 1px solid #43474e;
@@ -120,13 +120,38 @@
             border-color: #ffb4ab;
         }
 
-        /* Icono indicador en lugar de etiquetas de severidad confusas */
         .cam-icon {
             color: #9095a0;
             font-size: 0.9rem;
         }
         .sector-btn:hover .cam-icon {
             color: #ffb4ab;
+        }
+
+        /* DISEÑO DE LA LEYENDA DENTRO DEL SIDEBAR */
+        .sidebar-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #1a1c1e;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #2f3033;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: #e3e2e6;
+        }
+
+        .circle-key {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
         }
 
         /* Botón para Contraer/Expandir Menú */
@@ -173,7 +198,7 @@
             height: 100%;
         }
 
-        /* Paneles Flotantes */
+        /* Panel de Información Flotante */
         .floating-panel {
             position: absolute;
             background: rgba(17, 19, 21, 0.9);
@@ -182,26 +207,6 @@
             padding: 15px;
             border-radius: 8px;
             font-size: 0.8rem;
-        }
-
-        #legend {
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .circle-key {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
         }
 
         #info-box {
@@ -287,7 +292,7 @@
 
         <div>
             <div class="menu-section-title">2. Centrar Mapa en Sector</div>
-            <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; flex-direction: column; margin-bottom: 4px;">
                 <button class="sector-btn" onclick="focusSector(450, 490, 'Catia La Mar')">
                     <span>Catia La Mar</span>
                     <span class="cam-icon">👁️ Zoom</span>
@@ -306,6 +311,24 @@
                 </button>
             </div>
         </div>
+
+        <div>
+            <div class="menu-section-title">3. Leyenda de Severidad</div>
+            <div class="sidebar-legend">
+                <div class="legend-item">
+                    <div class="circle-key" style="background: #ff3b30;"></div>
+                    <span>Colapso Estructural / Severo</span>
+                </div>
+                <div class="legend-item">
+                    <div class="circle-key" style="background: #ff9500;"></div>
+                    <span>Daño Estructural Moderado</span>
+                </div>
+                <div class="legend-item">
+                    <div class="circle-key" style="background: #ffcc00;"></div>
+                    <span>Daño Menor / Grietas Leves</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="map-container">
@@ -320,21 +343,6 @@
         <div id="info-box" class="floating-panel">
             <h3 id="info-title">Detalle de Estructura</h3>
             <p id="info-body">Pase el cursor sobre un punto marcado para ver la evaluación del daño.</p>
-        </div>
-
-        <div id="legend" class="floating-panel">
-            <div class="legend-item">
-                <div class="circle-key" style="background: #ff3b30;"></div>
-                <span>Colapso Estructural / Severo</span>
-            </div>
-            <div class="legend-item">
-                <div class="circle-key" style="background: #ff9500;"></div>
-                <span>Daño Estructural Moderado</span>
-            </div>
-            <div class="legend-item">
-                <div class="circle-key" style="background: #ffcc00;"></div>
-                <span>Daño Menor / Grietas Leves</span>
-            </div>
         </div>
     </div>
 
