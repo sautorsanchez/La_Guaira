@@ -192,14 +192,14 @@
             text-rendering: optimizeLegibility;
         }
 
-        /* Estilos de alta definición para los elementos */
+        /* Estilos de alta definición para los elementos gráficos */
         .disaster-point {
             stroke-width: 0.5px;
             stroke: rgba(0, 0, 0, 0.3);
             vector-effect: non-scaling-stroke; 
         }
 
-        /* DISEÑO DE LA PISTA OPTIMIZADA */
+        /* Realce de Pista Aeronáutica */
         .runway-base {
             fill: #222325;
             stroke: #505358;
@@ -209,7 +209,7 @@
         .runway-line {
             stroke: #a0a5ad;
             stroke-width: 1px;
-            stroke-dasharray: 6, 6; /* Línea discontinua aeronáutica */
+            stroke-dasharray: 6, 6;
         }
 
         .runway-text {
@@ -402,21 +402,19 @@
             .attr("class", "coastline")
             .attr("d", "M -800,-800 L 2000,-800 L 2000,220 Q 1500,200 1000,240 Q 500,260 200,300 Q 0,320 -800,340 Z");
 
-        // GRUPO DE LA PISTA (REESTRUCTURADO PARA MÁS REALCE)
+        // Sistema Ferroviario / Pista del Aeropuerto Realzada
         const runwayGroup = mainGroup.append("g")
             .attr("id", "runway-system")
             .attr("transform", "rotate(2, 300, 345)");
 
-        // Base de asfalto de la pista
         runwayGroup.append("rect")
             .attr("class", "runway-base")
             .attr("x", 120)
             .attr("y", 342)
             .attr("width", 380)
             .attr("height", 24)
-            .attr("rx", 2); // Bordes ligeramente suavizados
+            .attr("rx", 2);
 
-        // Línea central de pista discontinua
         runwayGroup.append("line")
             .attr("class", "runway-line")
             .attr("x1", 125)
@@ -424,14 +422,12 @@
             .attr("x2", 495)
             .attr("y2", 354);
 
-        // Texto descriptivo integrado sobre el eje de orientación
         runwayGroup.append("text")
             .attr("class", "runway-text")
             .attr("x", 310)
             .attr("y", 334)
             .attr("text-anchor", "middle")
             .text("AEROPUERTO INTERNACIONAL DE MAIQUETÍA");
-
 
         // Generación de Puntos Sísmicos
         const totalPoints = 3420;
@@ -514,7 +510,7 @@
             mainGroup.selectAll(".disaster-point").attr("r", p => p.severity === 'high' ? 3.2 : 2.2).attr("stroke", "rgba(0,0,0,0.3)");
         });
 
-        // Centrado Dinámico y Automático
+        // Centrado Dinámico de Pantalla
         function resetMap() {
             d3.select("#info-box").style("display", "none");
             
@@ -553,6 +549,7 @@
             );
         }
 
+        // CONTROL DE MENÚ CON FILTRO PARA DISPOSITIVOS MÓVILES
         function toggleSidebar() {
             const sidebar = d3.select("#sidebar");
             const floatingBtn = d3.select("#floating-toggle");
@@ -562,14 +559,21 @@
                 sidebar.classed("collapsed", false);
                 if(window.innerWidth > 768) floatingBtn.style("display", "none");
             } else {
-                sidebar.collapsed = true;
                 sidebar.classed("collapsed", true);
                 floatingBtn.style("display", "flex");
             }
-            setTimeout(resetMap, 350);
+            
+            // FILTRO CRÍTICO: No reinicia el mapa en pantallas móviles al abrir/cerrar el menú
+            if (window.innerWidth > 768) {
+                setTimeout(resetMap, 350);
+            }
         }
 
-        window.addEventListener("resize", resetMap);
+        window.addEventListener("resize", () => {
+            if (window.innerWidth > 768) {
+                resetMap();
+            }
+        });
 
         function zoomIn() { svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.3); }
         function zoomOut() { svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.7); }
