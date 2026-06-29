@@ -200,7 +200,7 @@
             stroke-width: 1px;
         }
         .coastline {
-            fill: #1a2332; /* Mar Caribe */
+            fill: #1a2332; /* Mar Caribe al Norte */
             stroke: #40516b;
             stroke-width: 2px;
         }
@@ -231,19 +231,19 @@
             <label>Focos de Conflicto Activos:</label>
             <p class="section-desc" style="margin-bottom: 8px;">Haz clic en un sector para centrar el mapa:</p>
             
-            <button class="sector-btn" onclick="focusSector(450, 430, 'Catia La Mar')">
+            <button class="sector-btn" onclick="focusSector(450, 490, 'Catia La Mar')">
                 <span>Catia La Mar (Zona Cero)</span>
                 <span class="badge">Crítico</span>
             </button>
-            <button class="sector-btn" onclick="focusSector(280, 310, 'Aeropuerto / Brisas')">
+            <button class="sector-btn" onclick="focusSector(280, 430, 'Aeropuerto / Brisas')">
                 <span>Brisas del Aeropuerto</span>
                 <span class="badge" style="background-color: #ff9500;">Alto</span>
             </button>
-            <button class="sector-btn" onclick="focusSector(540, 370, 'Hospital Martín Vegas')">
+            <button class="sector-btn" onclick="focusSector(540, 420, 'Hospital Martín Vegas')">
                 <span>Hosp. Martín Vegas / Olivos</span>
                 <span class="badge" style="background-color: #ff9500;">Alto</span>
             </button>
-            <button class="sector-btn" onclick="focusSector(160, 350, 'Playa Verde')">
+            <button class="sector-btn" onclick="focusSector(160, 420, 'Playa Verde')">
                 <span>Playa Verde / Litoral</span>
                 <span class="badge" style="background-color: #ffcc00; color: #000;">Moderado</span>
             </button>
@@ -303,12 +303,12 @@
             mainGroup.append("line").attr("class", "grid-line").attr("x1", -2000).attr("y1", i).attr("x2", 3000).attr("y2", i);
         }
 
-        // GEOMETRÍA CORREGIDA: Mar al Norte (Arriba de la pantalla), Tierra al Sur (Abajo)
+        // GEOMETRÍA MARÍTIMA: Mar arriba, línea costera fluye orgánicamente
         mainGroup.append("path")
             .attr("class", "coastline")
             .attr("d", "M -1000,-1000 L 3000,-1000 L 3000,220 Q 1500,200 1000,240 Q 500,260 200,300 Q 0,320 -1000,340 Z");
 
-        // Pista de aterrizaje del Aeropuerto colocada correctamente sobre la franja terrestre
+        // Pista de aterrizaje del Aeropuerto de Maiquetía
         mainGroup.append("rect")
             .attr("class", "runway")
             .attr("x", 120)
@@ -317,27 +317,33 @@
             .attr("height", 20)
             .attr("transform", "rotate(2, 300, 345)");
 
-        // GENERACIÓN DE LOS ~3,400 PUNTOS AFECTADOS EN LA TIERRA
+        // GENERACIÓN ORGÁNICA DE LOS ~3,400 PUNTOS AFECTADOS (Densidad Realista)
         const totalPoints = 3420;
         const dataPoints = [];
 
-        // Focos geográficos reajustados para el continente (sur de la costa)
+        // Focos geográficos desplazados hacia el Sur para permitir dispersión natural sin cortes bruscos
         const centers = [
-            { name: "Catia La Mar", x: 450, y: 450, r: 140, highProb: 0.55 },
-            { name: "Brisas del Aeropuerto", x: 280, y: 395, r: 100, highProb: 0.40 },
-            { name: "Hospital Martín Vegas", x: 540, y: 380, r: 90, highProb: 0.35 },
-            { name: "Playa Verde", x: 160, y: 390, r: 110, highProb: 0.20 }
+            { name: "Catia La Mar", x: 450, y: 490, r: 130, highProb: 0.55 },
+            { name: "Brisas del Aeropuerto", x: 280, y: 430, r: 90, highProb: 0.40 },
+            { name: "Hospital Martín Vegas", x: 540, y: 420, r: 85, highProb: 0.35 },
+            { name: "Playa Verde", x: 160, y: 420, r: 100, highProb: 0.20 }
         ];
 
         for (let i = 0; i < totalPoints; i++) {
             const center = centers[Math.floor(Math.random() * centers.length)];
             
+            // Dispersión radial completa (0 a 360 grados) para emular curvas demográficas reales
             const angle = Math.random() * Math.PI * 2;
             const distance = Math.sqrt(Math.random()) * center.r;
             
             const x = center.x + Math.cos(angle) * distance;
-            // Asegurar que los puntos caigan hacia abajo en la zona continental
-            const y = center.y + Math.abs(Math.sin(angle) * distance);
+            const y = center.y + Math.sin(angle) * distance;
+
+            // Evitar que algún punto flote excesivamente dentro del mar profundo
+            let finalY = y;
+            if (x < 0 && finalY < 350) finalY = 350 + Math.random() * 50;
+            if (x >= 0 && x < 500 && finalY < 330) finalY = 330 + Math.random() * 40;
+            if (x >= 500 && finalY < 280) finalY = 280 + Math.random() * 40;
 
             const rand = Math.random();
             let severity = "low";
@@ -351,10 +357,10 @@
                 color = "#ff9500";
             }
 
-            dataPoints.push({ id: i, x: x, y: y, severity: severity, color: color, sector: center.name });
+            dataPoints.push({ id: i, x: x, y: finalY, severity: severity, color: color, sector: center.name });
         }
 
-        // Renderizado de puntos
+        // Renderizado de puntos en el mapa
         const pointsSelection = mainGroup.selectAll(".disaster-point")
             .data(dataPoints)
             .enter()
@@ -403,7 +409,7 @@
 
             svg.transition().duration(800).call(
                 zoomBehavior.transform,
-                d3.zoomIdentity.translate(width / 2 - x * 2.5, height / 2 - y * 2.5).scale(2.5)
+                d3.zoomIdentity.translate(width / 2 - x * 2.3, height / 2 - y * 2.3).scale(2.3)
             );
         }
 
@@ -411,10 +417,10 @@
         function zoomOut() { svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.7); }
         function resetMap() {
             d3.select("#info-box").style("display", "none");
-            svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity.translate(40, 20).scale(1.1));
+            svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity.translate(30, 0).scale(1.05));
         }
 
-        // Centrado adaptado por defecto
+        // Ajuste de inicio
         resetMap();
     </script>
 </body>
