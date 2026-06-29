@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visor de Impacto Sísmico - La Guaira</title>
     
-    <!-- Librería D3.js para la gestión de datos y gráficos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     
     <style>
@@ -31,7 +30,6 @@
             border-right: 1px solid #43474e;
             padding: 20px;
             display: flex;
-            flex-direction: solid;
             flex-direction: column;
             gap: 20px;
             overflow-y: auto;
@@ -76,7 +74,7 @@
             font-size: 0.9rem;
         }
 
-        /* Botones de Sectores (Didácticos) */
+        /* Botones de Sectores */
         .sector-btn {
             background-color: #232427;
             border: 1px solid #43474e;
@@ -157,7 +155,6 @@
         #info-box {
             top: 20px;
             right: 20px;
-            width: 28px;
             width: 280px;
             display: none;
             border-left: 4px solid #ffb4ab;
@@ -169,7 +166,7 @@
             font-size: 0.95rem;
         }
 
-        /* Controles de Zoom en pantalla */
+        /* Controles de Zoom */
         #zoom-controls {
             position: absolute;
             bottom: 20px;
@@ -203,12 +200,12 @@
             stroke-width: 1px;
         }
         .coastline {
-            fill: #1a2332;
+            fill: #1a2332; /* Mar Caribe */
             stroke: #40516b;
             stroke-width: 2px;
         }
         .runway {
-            fill: #3a3c40;
+            fill: #3a3c40; /* Pista Aeropuerto */
             stroke: #5a5d63;
             stroke-width: 1px;
         }
@@ -216,7 +213,6 @@
 </head>
 <body>
 
-    <!-- PANEL DE CONTROL LATERAL -->
     <div id="sidebar">
         <h1>Sismos La Guaira</h1>
         <p class="section-desc">Simulación interactiva de daños estructurales (Doble sismo de magnitud 7.2 / 7.5). Datos procesados didácticos basados en relieves e isométricos de modelado de colapso.</p>
@@ -235,7 +231,7 @@
             <label>Focos de Conflicto Activos:</label>
             <p class="section-desc" style="margin-bottom: 8px;">Haz clic en un sector para centrar el mapa:</p>
             
-            <button class="sector-btn" onclick="focusSector(450, 420, 'Catia La Mar')">
+            <button class="sector-btn" onclick="focusSector(450, 430, 'Catia La Mar')">
                 <span>Catia La Mar (Zona Cero)</span>
                 <span class="badge">Crítico</span>
             </button>
@@ -243,35 +239,31 @@
                 <span>Brisas del Aeropuerto</span>
                 <span class="badge" style="background-color: #ff9500;">Alto</span>
             </button>
-            <button class="sector-btn" onclick="focusSector(520, 220, 'Hospital Martín Vegas')">
+            <button class="sector-btn" onclick="focusSector(540, 370, 'Hospital Martín Vegas')">
                 <span>Hosp. Martín Vegas / Olivos</span>
                 <span class="badge" style="background-color: #ff9500;">Alto</span>
             </button>
-            <button class="sector-btn" onclick="focusSector(180, 480, 'Playa Verde')">
+            <button class="sector-btn" onclick="focusSector(160, 350, 'Playa Verde')">
                 <span>Playa Verde / Litoral</span>
                 <span class="badge" style="background-color: #ffcc00; color: #000;">Moderado</span>
             </button>
         </div>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL DEL MAPA -->
     <div id="map-container">
         <svg id="scene"></svg>
 
-        <!-- Controles de Zoom -->
         <div id="zoom-controls">
             <button class="zoom-btn" onclick="zoomIn()">+</button>
             <button class="zoom-btn" onclick="zoomOut()">-</button>
             <button class="zoom-btn" onclick="resetMap()">⟲</button>
         </div>
 
-        <!-- Panel de Información de Puntos -->
         <div id="info-box" class="floating-panel">
             <h3 id="info-title">Detalle de Estructura</h3>
             <p id="info-body">Pase el cursor sobre un punto marcado para ver la evaluación del daño de mampostería.</p>
         </div>
 
-        <!-- Leyenda de colores -->
         <div id="legend" class="floating-panel">
             <div class="legend-item">
                 <div class="circle-key" style="background: #ff3b30;"></div>
@@ -294,10 +286,9 @@
         const width = window.innerWidth - 320;
         const height = window.innerHeight;
 
-        // Grupo principal que contendrá los elementos móviles (Zoom y Pan)
+        // Grupo principal para Zoom y Pan
         const mainGroup = svg.append("g").attr("id", "main-group");
 
-        // Configuración del comportamiento del Zoom adaptado a pantallas táctiles (Android)
         const zoomBehavior = d3.zoom()
             .scaleExtent([0.5, 8])
             .on("zoom", (event) => {
@@ -306,67 +297,64 @@
 
         svg.call(zoomBehavior);
 
-        // Dibujar líneas de cuadrícula didácticas de simulación topográfica (estilo ArcGIS)
+        // Dibujar líneas de cuadrícula didácticas (estilo GIS)
         for (let i = -2000; i < 3000; i += 80) {
             mainGroup.append("line").attr("class", "grid-line").attr("x1", i).attr("y1", -2000).attr("x2", i).attr("y2", 3000);
             mainGroup.append("line").attr("class", "grid-line").attr("x1", -2000).attr("y1", i).attr("x2", 3000).attr("y2", i);
         }
 
-        // Simulación geométrica del terreno del Litoral Central (Costa de Vargas)
-        // Polígono que representa el mar y la línea costera
+        // GEOMETRÍA CORREGIDA: Mar al Norte (Arriba de la pantalla), Tierra al Sur (Abajo)
         mainGroup.append("path")
             .attr("class", "coastline")
-            .attr("d", "M -1000,-1000 L 3000,-1000 L 3000,150 Q 1500,180 1000,220 Q 500,280 200,350 Q 0,400 -1000,450 Z");
+            .attr("d", "M -1000,-1000 L 3000,-1000 L 3000,220 Q 1500,200 1000,240 Q 500,260 200,300 Q 0,320 -1000,340 Z");
 
-        // Representación didáctica de la pista de aterrizaje del Aeropuerto de Maiquetía
+        // Pista de aterrizaje del Aeropuerto colocada correctamente sobre la franja terrestre
         mainGroup.append("rect")
             .attr("class", "runway")
             .attr("x", 120)
-            .attr("y", 320)
+            .attr("y", 345)
             .attr("width", 380)
-            .attr("height", 25)
-            .attr("transform", "rotate(-5, 300, 320)");
+            .attr("height", 20)
+            .attr("transform", "rotate(2, 300, 345)");
 
-        // GENERACIÓN DE LOS ~3,400 PUNTOS AFECTADOS (DATA SIMULADA DE ALTA DENSIDAD)
+        // GENERACIÓN DE LOS ~3,400 PUNTOS AFECTADOS EN LA TIERRA
         const totalPoints = 3420;
         const dataPoints = [];
 
-        // Focos geográficos principales basados en la imagen del usuario
+        // Focos geográficos reajustados para el continente (sur de la costa)
         const centers = [
-            { name: "Catia La Mar", x: 450, y: 430, r: 160, highProb: 0.55 },
-            { name: "Brisas del Aeropuerto", x: 280, y: 300, r: 110, highProb: 0.40 },
-            { name: "Hospital Martín Vegas", x: 540, y: 240, r: 90, highProb: 0.35 },
-            { name: "Playa Verde", x: 160, y: 490, r: 120, highProb: 0.20 }
+            { name: "Catia La Mar", x: 450, y: 450, r: 140, highProb: 0.55 },
+            { name: "Brisas del Aeropuerto", x: 280, y: 395, r: 100, highProb: 0.40 },
+            { name: "Hospital Martín Vegas", x: 540, y: 380, r: 90, highProb: 0.35 },
+            { name: "Playa Verde", x: 160, y: 390, r: 110, highProb: 0.20 }
         ];
 
         for (let i = 0; i < totalPoints; i++) {
-            // Elegir un centro aleatorio para agrupar puntos de forma realista
             const center = centers[Math.floor(Math.random() * centers.length)];
             
-            // Distribución estadística radial (foco de daños)
             const angle = Math.random() * Math.PI * 2;
             const distance = Math.sqrt(Math.random()) * center.r;
             
             const x = center.x + Math.cos(angle) * distance;
-            const y = center.y + Math.sin(angle) * distance;
+            // Asegurar que los puntos caigan hacia abajo en la zona continental
+            const y = center.y + Math.abs(Math.sin(angle) * distance);
 
-            // Determinar severidad del daño de mampostería según la cercanía al centro
             const rand = Math.random();
             let severity = "low";
             let color = "#ffcc00";
 
             if (rand < center.highProb * (1 - distance / center.r)) {
                 severity = "high";
-                color = "#ff3b30"; // Rojo: Crítico
+                color = "#ff3b30";
             } else if (rand < 0.7) {
                 severity = "medium";
-                color = "#ff9500"; // Naranja: Moderado
+                color = "#ff9500";
             }
 
             dataPoints.push({ id: i, x: x, y: y, severity: severity, color: color, sector: center.name });
         }
 
-        // Renderizado de los puntos en el SVG mediante D3.js
+        // Renderizado de puntos
         const pointsSelection = mainGroup.selectAll(".disaster-point")
             .data(dataPoints)
             .enter()
@@ -383,7 +371,7 @@
                 showTooltip(event, d);
             });
 
-        // FILTROS DE INTERFAZ
+        // Filtros de visualización
         d3.select("#filter-impact").on("change", function() {
             const val = this.value;
             pointsSelection.style("display", d => {
@@ -392,7 +380,7 @@
             });
         });
 
-        // FUNCIONES DE CONTROL DE INTERACCIÓN Y CÁMARA
+        // Funciones del Tooltip e Interacción
         function showTooltip(event, d) {
             d3.select(this).attr("r", 6).attr("stroke", "#fff").attr("stroke-width", 1.5);
             
@@ -411,11 +399,11 @@
         function focusSector(x, y, name) {
             d3.select("#info-box").style("display", "block");
             d3.select("#info-title").text(name).style("color", "#ffb4ab");
-            d3.select("#info-body").text(`Cámara centrada en el foco táctico de ${name}. Use los controles de zoom si está usando un dispositivo móvil.`);
+            d3.select("#info-body").text(`Cámara centrada en el foco táctico de ${name}. Use los controles en pantalla o gestos táctiles para hacer zoom.`);
 
             svg.transition().duration(800).call(
                 zoomBehavior.transform,
-                d3.zoomIdentity.translate(width / 2 - x * 2, height / 2 - y * 2).scale(2)
+                d3.zoomIdentity.translate(width / 2 - x * 2.5, height / 2 - y * 2.5).scale(2.5)
             );
         }
 
@@ -423,10 +411,10 @@
         function zoomOut() { svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.7); }
         function resetMap() {
             d3.select("#info-box").style("display", "none");
-            svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity);
+            svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity.translate(40, 20).scale(1.1));
         }
 
-        // Ajustar centrado inicial al cargar la pantalla
+        // Centrado adaptado por defecto
         resetMap();
     </script>
 </body>
